@@ -31,7 +31,7 @@ import assert from 'assert';
   trace(`loaded services from API\n${JSON.stringify(services, null, 4)}`)
   let systemServicesIds = [] // cache of system services we will ignore
 
-  const monitors = await all(services.map(initServiceMonitor));
+  const monitors = await all(services.filter(filterServiceMonitor).map(initServiceMonitor));
   info('monitors inited:');
   for (let m of monitors) {
     info(m.toString());
@@ -41,6 +41,13 @@ import assert from 'assert';
   while(true) {
     await Promise.delay(config.pollServicesInterval);
     await updateMonitors();
+  }
+  
+  async function filterServiceMonitor(service) {
+    if(typeof service === 'undefined') return false;
+    if(typeof service.name === 'undefined') return false;
+    if(typeof stacksById[service.environmentId] === 'undefined') return false;
+    return true;
   }
 
   async function initServiceMonitor(service) {
